@@ -1,33 +1,35 @@
-fn parse(input: &str) -> [usize; 9] {
+use std::collections::VecDeque;
+
+fn parse(input: &str) -> VecDeque<usize> {
     input
         .split(",")
         .map(|n| n.parse().unwrap())
-        .fold([0; 9], |mut v, x: usize| {
+        .fold(VecDeque::from([0; 9]), |mut v, x: usize| {
             v[x] += 1;
             v
         })
 }
-
-fn solve(mut data: [usize; 9], days: usize) -> usize {
+fn simulation(data: &mut VecDeque<usize>, days: usize) {
     for _ in 0..days {
-        let new_fishes = data[0];
         data.rotate_left(1);
-        data[6] += new_fishes
+        data[6] += data[8];
     }
-
-    data.iter().sum()
 }
 
 pub fn p1(input: &str) -> usize {
-    let fishes = parse(input);
+    let mut fishes = parse(input);
 
-    solve(fishes, 80)
+    simulation(&mut fishes, 80);
+
+    fishes.iter().sum()
 }
 
 pub fn p2(input: &str) -> usize {
-    let fishes = parse(input);
+    let mut fishes = parse(input);
 
-    solve(fishes, 256)
+    simulation(&mut fishes, 256);
+
+    fishes.iter().sum()
 }
 
 #[test]
