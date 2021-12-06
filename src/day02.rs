@@ -15,7 +15,7 @@ struct Submarine {
 }
 
 fn parse<'a>(input: &'a str) -> impl Iterator<Item = Move> + 'a {
-    input.lines().map(|m| Move::from_str(m).unwrap())
+    input.lines().map(|m| m.parse().unwrap())
 }
 
 fn make_move(submarine: Submarine, m: Move) -> Submarine {

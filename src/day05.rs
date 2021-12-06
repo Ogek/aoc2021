@@ -14,23 +14,27 @@ fn parse_point(raw_point: &str) -> Point {
         .unwrap()
 }
 
-fn parse<'a>(input: &'a str) -> impl Iterator<Item = Line> + 'a {
-    input.lines().map(|l| {
-        let (start, end) = l.split_once(" -> ").unwrap();
+fn parse(input: &str) -> Vec<Line> {
+    input
+        .lines()
+        .map(|l| {
+            let (start, end) = l.split_once(" -> ").unwrap();
 
-        Line {
-            p1: parse_point(start),
-            p2: parse_point(end),
-        }
-    })
+            Line {
+                p1: parse_point(start),
+                p2: parse_point(end),
+            }
+        })
+        .collect()
 }
 
 pub fn p1(input: &str) -> usize {
     let lines = parse(input);
 
     let map: HashMap<Point, usize> = lines
-        .filter(Line::is_not_diagonal)
-        .flat_map(|line| line.get_points())
+        .iter()
+        .filter(|line| !line.is_diagonal())
+        .flat_map(|line| line.iter_points())
         .fold(HashMap::new(), |mut acc, point| {
             *acc.entry(point).or_insert(0) += 1;
             acc
@@ -44,7 +48,8 @@ pub fn p2(input: &str) -> usize {
 
     let map: HashMap<Point, usize> =
         lines
-            .flat_map(|line| line.get_points())
+            .iter()
+            .flat_map(|line| line.iter_points())
             .fold(HashMap::new(), |mut acc, point| {
                 *acc.entry(point).or_insert(0) += 1;
                 acc
@@ -54,7 +59,7 @@ pub fn p2(input: &str) -> usize {
 }
 
 impl Line {
-    fn get_points(&self) -> Vec<Point> {
+    fn iter_points(&self) -> impl Iterator<Item = Point> + '_ {
         let x_diff = (self.p1.0 - self.p2.0).abs();
         let y_diff = (self.p1.1 - self.p2.1).abs();
 
@@ -63,18 +68,16 @@ impl Line {
 
         let dist = std::cmp::max(x_diff, y_diff);
 
-        (0..=dist)
-            .map(|i| {
-                let x = self.p1.0 + (dx * i as isize);
-                let y = self.p1.1 + (dy * i as isize);
+        (0..=dist).map(move |i| {
+            let x = self.p1.0 + (dx * i as isize);
+            let y = self.p1.1 + (dy * i as isize);
 
-                (x, y)
-            })
-            .collect()
+            (x, y)
+        })
     }
 
-    fn is_not_diagonal(&self) -> bool {
-        self.p1.0 == self.p2.0 || self.p1.1 == self.p2.1
+    fn is_diagonal(&self) -> bool {
+        self.p1.0 != self.p2.0 && self.p1.1 != self.p2.1
     }
 }
 
@@ -118,26 +121,35 @@ fn test_points() {
         p1: (1, 1),
         p2: (3, 3),
     };
-    assert_eq!(line.get_points(), vec![(1, 1), (2, 2), (3, 3)]);
+    assert_eq!(
+        line.iter_points().collect::<Vec<_>>(),
+        vec![(1, 1), (2, 2), (3, 3)]
+    );
 
     let line = Line {
         p1: (0, 0),
         p2: (3, 3),
     };
-    assert_eq!(line.get_points(), vec![(0, 0), (1, 1), (2, 2), (3, 3)]);
+    assert_eq!(
+        line.iter_points().collect::<Vec<_>>(),
+        vec![(0, 0), (1, 1), (2, 2), (3, 3)]
+    );
 
     let line = Line {
         p1: (9, 7),
         p2: (7, 9),
     };
-    assert_eq!(line.get_points(), vec![(9, 7), (8, 8), (7, 9)]);
+    assert_eq!(
+        line.iter_points().collect::<Vec<_>>(),
+        vec![(9, 7), (8, 8), (7, 9)]
+    );
 
     let line = Line {
         p1: (8, 0),
         p2: (0, 8),
     };
     assert_eq!(
-        line.get_points(),
+        line.iter_points().collect::<Vec<_>>(),
         vec![
             (8, 0),
             (7, 1),
@@ -157,7 +169,7 @@ fn test_points() {
     };
 
     assert_eq!(
-        line.get_points(),
+        line.iter_points().collect::<Vec<_>>(),
         vec![
             (0, 8),
             (1, 7),
