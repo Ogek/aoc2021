@@ -2,37 +2,34 @@ fn parse(input: &str) -> Vec<usize> {
     input.split(',').map(|n| n.parse().unwrap()).collect()
 }
 
-pub fn p1(input: &str) -> usize {
-    let data = parse(input);
+fn solve<F>(data: &Vec<usize>, f: F) -> usize
+where
+    F: Fn(usize, usize) -> usize,
+{
     let min = *data.iter().min().unwrap();
     let max = *data.iter().max().unwrap();
 
     (min..max)
-        .map(|desired_position| {
-            data.iter()
-                .map(move |n| (*n as isize - desired_position as isize).abs() as usize)
-                .sum()
-        })
+        .map(|desired_position| data.iter().map(|n| f(*n, desired_position)).sum())
         .min()
         .unwrap()
 }
 
+pub fn p1(input: &str) -> usize {
+    let data = parse(input);
+
+    solve(&data, |n: usize, desired_pos: usize| {
+        (n as isize - desired_pos as isize).abs() as usize
+    })
+}
+
 pub fn p2(input: &str) -> usize {
     let data = parse(input);
-    let min = *data.iter().min().unwrap();
-    let max = *data.iter().max().unwrap();
 
-    (min..max)
-        .map(|desired_position| {
-            data.iter()
-                .map(move |n| {
-                    let steps = (*n as isize - desired_position as isize).abs() as usize;
-                    steps * (steps + 1) / 2
-                })
-                .sum()
-        })
-        .min()
-        .unwrap()
+    solve(&data, |n: usize, desired_pos: usize| {
+        let steps = (n as isize - desired_pos as isize).abs() as usize;
+        steps * (steps + 1) / 2
+    })
 }
 
 #[test]
