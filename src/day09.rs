@@ -1,12 +1,10 @@
 use std::collections::HashSet;
 
-type Caves = Vec<Vec<usize>>;
+type CavesMap = Vec<Vec<usize>>;
 type Coordinate = (usize, usize);
 type Height = usize;
 
-static NEIGH: [(isize, isize); 4] = [(0, 1), (1, 0), (0, -1), (-1, 0)];
-
-fn parse(input: &str) -> Caves {
+fn parse(input: &str) -> CavesMap {
     input
         .lines()
         .map(|l| {
@@ -17,7 +15,7 @@ fn parse(input: &str) -> Caves {
         .collect()
 }
 
-fn iter_caves(caves: &Caves) -> impl Iterator<Item = (Height, Coordinate)> + '_ {
+fn iter_caves_with_coord(caves: &CavesMap) -> impl Iterator<Item = (Height, Coordinate)> + '_ {
     caves
         .iter()
         .enumerate()
@@ -25,43 +23,41 @@ fn iter_caves(caves: &Caves) -> impl Iterator<Item = (Height, Coordinate)> + '_ 
 }
 
 fn get_neigh<'a>(
-    map: &'a Caves,
+    caves: &'a CavesMap,
     coord: Coordinate,
 ) -> impl Iterator<Item = (Height, Coordinate)> + 'a {
-    NEIGH.iter().filter_map(move |(nx, ny)| {
-        let x = coord.0 as isize + nx;
-        let y = coord.1 as isize + ny;
+    [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        .iter()
+        .filter_map(move |(dx, dy)| {
+            let x = coord.0 as isize + dx;
+            let y = coord.1 as isize + dy;
 
-        if y < 0 || y >= map.len() as isize {
-            return None;
-        }
+            if y < 0 || y >= caves.len() as isize {
+                return None;
+            }
 
-        if x < 0 || x >= map[0].len() as isize {
-            return None;
-        }
+            if x < 0 || x >= caves[0].len() as isize {
+                return None;
+            }
 
-        let x = x as usize;
-        let y = y as usize;
+            let x = x as usize;
+            let y = y as usize;
 
-        return Some((map[y][x], (x, y)));
-    })
+            return Some((caves[y][x], (x, y)));
+        })
 }
 
-fn is_low(caves: &Caves, (height, coord): (Height, Coordinate)) -> bool {
-    if let Some(min) = get_neigh(&caves, coord)
+fn is_low(caves: &CavesMap, (height, coord): (Height, Coordinate)) -> bool {
+    get_neigh(&caves, coord)
         .chain(std::iter::once((height, coord)))
         .map(|(height, _)| height)
         .min()
-    {
-        if min == height {
-            return true;
-        }
-    }
-    false
+        .unwrap()
+        == height
 }
 
-fn low_points(caves: &Caves) -> impl Iterator<Item = (Height, Coordinate)> + '_ {
-    iter_caves(&caves).filter(move |cave_info| is_low(&caves, *cave_info))
+fn low_points(caves: &CavesMap) -> impl Iterator<Item = (Height, Coordinate)> + '_ {
+    iter_caves_with_coord(&caves).filter(move |cave| is_low(&caves, *cave))
 }
 
 pub fn p1(input: &str) -> usize {
@@ -70,8 +66,8 @@ pub fn p1(input: &str) -> usize {
     low_points(&caves).map(|(h, _)| h + 1).sum()
 }
 
-fn find_basins<'a>(caves: &Caves) -> impl Iterator<Item = HashSet<Coordinate>> + '_ {
-    fn compute_basin(caves: &Caves, current: (Height, Coordinate)) -> HashSet<Coordinate> {
+fn find_basins<'a>(caves: &CavesMap) -> impl Iterator<Item = HashSet<Coordinate>> + '_ {
+    fn compute_basin(caves: &CavesMap, current: (Height, Coordinate)) -> HashSet<Coordinate> {
         std::iter::once(current.1)
             .chain(
                 get_neigh(caves, current.1)
