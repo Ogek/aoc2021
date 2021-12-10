@@ -14,29 +14,6 @@ fn mirror(c: &char) -> char {
     }
 }
 
-fn corrupted_score(c: &char) -> usize {
-    match c {
-        ')' => 3,
-        ']' => 57,
-        '}' => 1197,
-        '>' => 25137,
-        _ => unreachable!(),
-    }
-}
-
-fn incomplete_score(remaining: &Vec<char>) -> usize {
-    remaining.iter().fold(0, |acc, c| {
-        acc * 5
-            + match c {
-                ')' => 1,
-                ']' => 2,
-                '}' => 3,
-                '>' => 4,
-                _ => unreachable!(),
-            }
-    })
-}
-
 fn check_line(line: &str) -> Result<(), LineError> {
     let mut stack = vec![];
 
@@ -66,10 +43,12 @@ pub fn p1(input: &str) -> usize {
     input
         .lines()
         .map(check_line)
-        .filter_map(|res| match res {
-            Err(LineError::Corrupted(c)) => Some(corrupted_score(&c)),
-            _ => None,
+        .filter_map(|res| res.err())
+        .filter(|err| match err {
+            LineError::Corrupted(_) => true,
+            _ => false,
         })
+        .map(|err| err.score())
         .sum()
 }
 
@@ -77,15 +56,41 @@ pub fn p2(input: &str) -> usize {
     let mut scores: Vec<usize> = input
         .lines()
         .map(check_line)
-        .filter_map(|res| match res {
-            Err(LineError::Incomplete(remaining)) => Some(incomplete_score(&remaining)),
-            _ => None,
+        .filter_map(|res| res.err())
+        .filter(|err| match err {
+            LineError::Incomplete(_) => true,
+            _ => false,
         })
+        .map(|err| err.score())
         .collect();
 
     scores.sort();
 
     scores[scores.len() / 2]
+}
+
+impl LineError {
+    fn score(&self) -> usize {
+        match self {
+            Self::Corrupted(expected) => match expected {
+                ')' => 3,
+                ']' => 57,
+                '}' => 1197,
+                '>' => 25137,
+                _ => unreachable!(),
+            },
+            Self::Incomplete(reminder) => reminder.iter().fold(0, |acc, c| {
+                acc * 5
+                    + match c {
+                        ')' => 1,
+                        ']' => 2,
+                        '}' => 3,
+                        '>' => 4,
+                        _ => unreachable!(),
+                    }
+            }),
+        }
+    }
 }
 
 #[test]
