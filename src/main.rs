@@ -1,14 +1,14 @@
 use std::time::Instant;
 
-mod day15;
+mod day16;
 
 fn main() {
     let now = Instant::now();
-    let p1_ans = day15::p1(include_str!("../inputs/day15.txt"));
+    let p1_ans = day16::p1(include_str!("../inputs/day16.txt"));
     let p1_took = now.elapsed();
 
     let now = Instant::now();
-    let p2_ans = day15::p2(include_str!("../inputs/day15.txt"));
+    let p2_ans = day16::p2(include_str!("../inputs/day16.txt"));
     let p2_took = now.elapsed();
 
     println!("P1 Solution: {:?}", p1_ans);

@@ -1,8 +1,8 @@
 use std::cmp::Reverse;
 use std::collections::{BinaryHeap, HashMap};
 
-type CaveMap = HashMap<(usize, usize), usize>;
 type Coordinate = (usize, usize);
+type CaveMap = HashMap<Coordinate, usize>;
 
 fn parse(input: &str) -> CaveMap {
     input
